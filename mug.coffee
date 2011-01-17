@@ -2,6 +2,9 @@
 mug = exports ? {}
 if window? then window.mug = mug
 
+# todo: why is map not lazy?! assert that it must return an iterable and
+# stop just using array map, jesus
+
 mug.meta = meta =
   name: "Mug"
   version: [0, 0, 0]
@@ -176,9 +179,9 @@ mug.Promise = class Promise
 # Created using the `deque` function. If an argument is provided then its values
 # are pushed on.
 # 
-# - `.push(value)`/`.pushFront(value)` pushes a value onto the back/front of the
+# - `.push(value)`/`.unshift(value)` pushes a value onto the back/front of the
 #   Deque.
-# - `.pop()`/`.popFront()` returns and removes the value at the back/front of the
+# - `.pop()`/`.shift()` returns and removes the value at the back/front of the
 #   Deque.
 # - `.length` returns the number of values in the Deque.
 # - `.back()`/`.front()` returns the value at back/front of the Deque without
@@ -535,20 +538,20 @@ mug.BufferedIterator = class BufferedIterator extends Iterator
     
     next: ->
         if @buffer.length
-            @buffer.popFront()
+            @buffer.shift()
         else
             @iterator.next()
     
     first: ->
         if not @buffer.length
-            @buffer.pushFront @iterator.next()
+            @buffer.unshift @iterator.next()
         
         @buffer.first()
     
     push: (value) ->
-        @buffer.pushFront value
+        @buffer.unshift value
 
-mug.var = (value) ->
+mug.ref = ref = (value) ->
   # An variable encapulated in a function.
   
   f = ->
@@ -561,7 +564,7 @@ mug.var = (value) ->
   
   f
 
-mug.any = (iterable) ->
+mug.any = ref = (iterable) ->
   i = iter(iterable)
   
   if i.next()
