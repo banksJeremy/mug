@@ -65,11 +65,14 @@ mug.apply = apply = (f, thisValue, args) ->
 mug.Promise = class Promise
   # an interactive promise along-the-lines of the CommmonJS proposal
   
-  constructor: ->
+  constructor: (value) ->
     @state = "unfulfilled"
     @fulfillHandlers = []
     @failHandlers = []
     @handlers = { fulfill: [], fail: [], progress: [] }
+    
+    if value?
+      @fulfill value
     
     null
   
@@ -104,7 +107,7 @@ mug.Promise = class Promise
     
     null
   
-  and: (other) ->
+  also: (other) ->
     # create a new promise based on the outcome of this and another promise
     p = new Promise
     @then (other.then (-> p.fulfill()), (-> p.fail())), (-> p.fail())
@@ -562,19 +565,6 @@ mug.BufferedIterator = class BufferedIterator extends Iterator
     
     push: (value) ->
         @buffer.unshift value
-
-mug.ref = ref = (value) ->
-  # An variable encapulated in a function.
-  
-  f = ->
-    if arguments.length
-      f.value = arguments[0]
-    
-    f.value
-  
-  f.value = value
-  
-  f
 
 mug.any = ref = (iterable) ->
   i = iter(iterable)
