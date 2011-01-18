@@ -9,7 +9,7 @@ mug.meta = meta =
   name: "Mug"
   version: [0, 0, 0]
   oneLineDescription: "A collection of things I like to have in CoffeeScript."
-  address: null
+  address: "https://gist.github.com/9ba8fffbe53d1ed642ce"
   author: "Jeremy Banks <jeremy@jeremybanks.com>"
   license: "Copyright 2011 Jeremy Banks. Released under the MIT license."
 

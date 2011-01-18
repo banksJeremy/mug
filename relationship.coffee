@@ -16,6 +16,7 @@
   warn: warn
   error: error
 } = console
+inspect = require?("util")?.inspect ? (x) -> x
 
 snapInt = (f) ->
   # if a float is nearer than 1e-12 to an integer, round it
@@ -27,6 +28,8 @@ class Ref
   constructor: (value) ->
     @onceSet = new Promise
     @set value
+    
+    null
   
   set: (value) ->
     # returns false if value already set
@@ -39,8 +42,6 @@ class Ref
       true
     else
       false
-
-Ref.fromValues = -> mapper(arguments).map -> new Ref this
 
 reciprocal = (ref) ->
   result = new Ref
@@ -70,7 +71,7 @@ commutitiveOperation = (operation) ->
     outstandingVars = refs.length
     
     update = ->
-      if outstandingVars.length is 1 and result.value?
+      if outstandingVars is 1 and result.value?
         remainingValue = result.value
         
         for ref in refs
@@ -80,7 +81,7 @@ commutitiveOperation = (operation) ->
             unknownOne = ref
         
         unknownOne.set remainingValue
-      else if outstandingVars.length is 0 and not result.value?
+      else if outstandingVars is 0 and not result.value?
         runningValue = operation.identity
         
         for ref in refs
@@ -110,7 +111,11 @@ equality = (refs...) ->
   
   refs[0]
 
-[force, mass, acceleration] = Ref.fromValues null, null, null
+[force, mass, acceleration] = [new Ref, new Ref, new Ref]
+
+force.onceSet.then (x) -> log "FORCE IS SET", x
+mass.onceSet.then (x) -> log "MASS IS SET", x
+acceleration.onceSet.then (x) -> log "ACCEL IS SET", x
 
 equality(force, product(mass, acceleration)) # f = ma
 
