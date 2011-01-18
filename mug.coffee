@@ -74,7 +74,10 @@ mug.Promise = class Promise
     null
   
   fulfill: (@value) ->
-    @state = "fullfilled"
+    if @state isnt "unfulfilled"
+      throw new Error "Cannot fulfill a #{@state} Promise."
+    
+    @state = "fulfilled"
     
     for f in @handlers.fulfill
       f.call this, @value
@@ -82,6 +85,9 @@ mug.Promise = class Promise
     delete @handlers
   
   fail: ->
+    if @state isnt "unfulfilled"
+      throw new Error "Cannot fail a #{@state} Promise."
+    
     @state = "failed"
     
     for f in @handlers.fail
@@ -90,23 +96,29 @@ mug.Promise = class Promise
     delete @handlers
   
   progress: (event) ->
-    return if @state isnt "unfulfilled"
+    if @state isnt "unfulfilled"
+      throw new Error "Cannot progress a #{@state} Promise."
     
     for f in @handlers.progress
       f.call this, event
     
     null
   
+  and: (other) ->
+    # create a new promise based on the outcome of this and another promise
+    p = new Promise
+    @then (other.then (-> p.fullfill()), (-> p.fail())), (-> p.fail())
+  
   then: (fulfilledHander, failHandler, progressHandler) ->
     if fulfilledHander?
-      if @state is "fullfilled"
-        fullfilled.call this, @value
+      if @state is "fulfilled"
+        fulfilled.call this, @value
       else if @state is "unfulfilled"
         @fulfilledHanders.push fulfilledHander
     
     if failHandler?
       if @state is "failed"
-        fullfilled.call this, @value
+        fulfilled.call this, @value
       else if @state is "unfulfilled"
         @failHandlers.push failHandler
     
@@ -270,7 +282,7 @@ mug.iter = iter = (iterable) ->
         throw e
 
 iter.canUseSimply = (o) ->
-    isFunction o.next, o.hasNext or
+    isFunction(o.next, o.hasNext) or
     o.length? or anyFunction o, o.iterator
 
 seq = (seqable) ->
@@ -288,7 +300,7 @@ seq = (seqable) ->
         throw e
 
 seq.canUseSimply = (o) ->
-    isFunction o.first, o.rest or
+    isFunction(o.first, o.rest) or
     anyFunction o.sequence
 
 mug.biter = biter = (iterable) ->

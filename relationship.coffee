@@ -9,140 +9,115 @@
   any: any
   all: all
   isArray: isArray
+  Promise
 } = mug = window?.mug? || require?("./mug")
-
-console.log "D", iter(mug.deque([1])).toArray()
-
-parseArgs = (args, default_n) ->
-  args = biter args
-  
-  if args.first() instanceof Number or args.first() instanceof String
-    n = args.next()
-  else
-    n = default_n
-  
-  if args.first() instanceof Object and args.first() not instanceof Array
-    object = args.next()
-  else
-    object = {}
-  
-  factor = 1
-  sign = 1
-  
-  console.log "--", args.constructor
-  
-  args.each ->
-    signed_factor = sign * factor
-    object[signed_factor] = (object[signed_factor] ? []).concat this
-    
-    if sign is 1
-      sign = -1
-    else
-      factor += 1
-      sign = +1
-  
-  vars = []
-  for coefficient, values of object
-    for value in values
-      vars.push [ coefficient, value ]
-  
-  return [n, vars]
+{
+  log: log
+  warn: warn
+  error: error
+} = console
 
 snapInt = (f) ->
-  # rounds to the nearest integer if the difference is less than 1e-9
-  
-  if Math.abs(f % 1) < 1e-9
-    f - (f % 1)
+  # if a float is nearer than 1e-12 to an integer, round it
+  if Math.abs(f % 1) < 1e-12
+    f - f % 1
   else
     f
-
-relateOperations = (main, magnitude) ->
-  class Constant
-    constructor: ->
-      [@constant, @coVars] = parseArgs arguments, main.identity
-      console.log @coVars
+class Ref
+  constructor: (value) ->
+    @onceSet = new Promise
+    @set value
   
-    relate: ->
-      return if not @coVars.length
-    
-      changed = false
-    
-      if @coVars.length is 1
-        [coefficient, variable] = @coVars.pop()
-        variable magnitude.opposite @constant, coefficient
+  set: (value) ->
+    # returns false if value already set
+    if value? and @onceSet.status is "unfulfilled"
+      if value instanceof Function
+        value = value()
       
-        changed = true
-      else
-        newVars = for coVar in @coVars
-          [coefficient, variable] = coVar
-          if variable()?
-            @constant = main.perform @constant, magnitude.perform variable(), coefficient
-        
-            changed = true
-        
-            null
-          else
-            variable
+      @onceSet.fulfill @value = value
       
-        if changed
-          @coVars = newVars.filter (v) -> v?
-      
-        changed
-    
-      if changed
-        @relate() # continue relating until no more changes
-      
-        true
-      else
-        false
+      true
+    else
+      false
 
-addition = 
-  perform: (a, b) -> a + b
-  opposite: (c, a) -> c - a
+Ref.fromValues = -> mapper(arguments).map -> new Ref this
+
+reciprocal = (ref) ->
+  result = new Ref
+  ref.onceSet.then (value) -> result.set 1 / value
+  result.onceSet.then (value) -> ref.set 1 / value
+  
+  result
+
+addition =
+  perform: (a, b) -> c = a + b
+  undo: (c, b) -> a = c - b
   identity: 0
 
 multiplication =
-  perform: (a, b) -> a * b
-  opposite: (c, a) -> c / a
+  perform: (a, b) -> c = a * b
+  undo: (c, b) -> a = c / b
   identity: 1
 
 exponentiation =
-  perform: (a, b) -> Math.pow a, b
-  opposite: (c, a) -> Math.log a, c
-  identity: 0
+  perform: (a, b) -> c = Math.pow a, b
+  undo: (c, b) -> a = snapInt Math.pow c, (1 / b)
+  identity: 1
 
-ConstantSum = relateOperations addition, multiplication
-ConstantProduct = relateOperations multiplication, exponentiation
-console.log "Defined terms"
+commutitiveOperation = (operation) ->
+  (refs...) ->
+    result = new Ref
+    outstandingVars = refs.length
+    
+    update = ->
+      if outstandingVars.length is 1 and result.value?
+        remainingValue = result.value
+        
+        for ref in refs
+          if ref.value?
+            remainingValue = operation.undo remainingValue, ref.value
+          else
+            unknownOne = ref
+        
+        unknownOne.set remainingValue
+      else if outstandingVars.length is 0 and not result.value?
+        runningValue = operation.identity
+        
+        for ref in refs
+          runningValue = operation.perform runningValue, ref.value
+        
+        result.set runningValue
+      
+      null
+    
+    result.onceSet.then update
+    
+    for ref in refs
+      ref.onceSet.then (value) ->
+        outstandingVars -= 1
+        update()
+    
+    result
 
-relate = (relationships) ->
-  keepGoing = true
-  anyProgress = false
+sum = commutitiveOperation addition
+product = commutitiveOperation multiplication
+
+equality = (refs...) ->
+  for ref in refs
+    ref.onceSet.then (value) ->
+      for refP in refs
+        ref.set value
   
-  while keepGoing
-    keepGoing = false
-  
-    for relationship in relationships
-      if relationship.relate()
-        keepGoing = true
-        anyProgress = true
-  
-  anyProgress
+  refs[0]
 
-console.log "making refs"
+[force, mass, acceleration] = Ref.fromValues null, null, null
 
-pHappy = ref()
-pHappygDog = ref .75
-pDog = ref .40
-pDoggHappy = ref .50
+equality(force, product(mass, acceleration)) # f = ma
 
-console.log "made refs"
+log "Setting force=6, mass=2."
+force.set 6
+mass.set 2
+log "Checking force=#{force.value}, mass=#{mass.value}."
+log "Now acceleration=#{acceleration.value}."
 
-console.log pHappy(), pHappygDog()
 
-console.log "that's pHappy, pHappygDog"
-
-(new ConstantProduct [pHappy, pHappygDog], [pDog, pDoggHappy]).relate()
-
-console.log pHappy()
-console.log "that's pHappy again"
