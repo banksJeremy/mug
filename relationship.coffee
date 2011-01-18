@@ -39,9 +39,7 @@ class Ref
       
       @onceSet.fulfill @value = value
       
-      true
-    else
-      false
+    @value
 
 reciprocal = (ref) ->
   result = new Ref
@@ -107,22 +105,30 @@ equality = (refs...) ->
   for ref in refs
     ref.onceSet.then (value) ->
       for refP in refs
-        ref.set value
+        refP.set value
   
   refs[0]
 
-[force, mass, acceleration] = [new Ref, new Ref, new Ref]
+# f = ma
+force = new Ref, mass = new Ref, acceleration = new Ref
+equality(force, product(mass, acceleration))
 
-force.onceSet.then (x) -> log "FORCE IS SET", x
-mass.onceSet.then (x) -> log "MASS IS SET", x
-acceleration.onceSet.then (x) -> log "ACCEL IS SET", x
-
-equality(force, product(mass, acceleration)) # f = ma
-
-log "Setting force=6, mass=2."
 force.set 6
 mass.set 2
-log "Checking force=#{force.value}, mass=#{mass.value}."
-log "Now acceleration=#{acceleration.value}."
+log "Acceleration = #{acceleration.value}"
+
+# p(happy)p(dog|happy) = p(dog)p(happy|dog)
+pH = new Ref, pDgH = new Ref, pD = new Ref, pHgD = new Ref
+equality(product(pH, pDgH), product(pD, pHgD))
+
+pH.set .6
+pD.set .9
+pHgD.set .5
+log "P(dog|happy)=#{pDgH.value}"
+
+# now add notHappy and notDog
+pnH = new Ref, pnD = new Ref
+sum(pH, pnH).set(1).sum(pD, pnD)
+
 
 
