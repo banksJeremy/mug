@@ -65,7 +65,7 @@ mug.apply = apply = (f, thisValue, args) ->
 mug.Promise = class Promise
   # an interactive promise along-the-lines of the CommmonJS proposal
   
-  construct: ->
+  constructor: ->
     @state = "unfulfilled"
     @fulfillHandlers = []
     @failHandlers = []
@@ -107,24 +107,24 @@ mug.Promise = class Promise
   and: (other) ->
     # create a new promise based on the outcome of this and another promise
     p = new Promise
-    @then (other.then (-> p.fullfill()), (-> p.fail())), (-> p.fail())
+    @then (other.then (-> p.fulfill()), (-> p.fail())), (-> p.fail())
   
   then: (fulfilledHander, failHandler, progressHandler) ->
     if fulfilledHander?
       if @state is "fulfilled"
-        fulfilled.call this, @value
+        fulfilledHander.call this, @value
       else if @state is "unfulfilled"
-        @fulfilledHanders.push fulfilledHander
+        @handlers.fulfill.push fulfilledHander
     
     if failHandler?
       if @state is "failed"
-        fulfilled.call this, @value
+        failHandler.call this, @value
       else if @state is "unfulfilled"
-        @failHandlers.push failHandler
+        @handlers.fail.push failHandler
     
     if progressHandler?
       if @state is "unfulfilled"
-        @progressHandlers.push progressHandler
+        @handlers.progress.push progressHandler
     
     null
   

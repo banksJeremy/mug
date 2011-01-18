@@ -30,7 +30,7 @@ class Ref
   
   set: (value) ->
     # returns false if value already set
-    if value? and @onceSet.status is "unfulfilled"
+    if value? and @onceSet.state is "unfulfilled"
       if value instanceof Function
         value = value()
       
