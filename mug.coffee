@@ -4,7 +4,7 @@ if window? then window.mug = mug
 
 # todo: why is map not lazy?! assert that it must return an iterable and
 # stop just using array map, jesus
-# also I don't think this works the same as jQuery's map...
+# also I don't think this works the same as jQuery's map.
 
 mug.meta = meta =
   name: "Mug"
@@ -68,6 +68,7 @@ mug.Promise = class Promise
   
   constructor: (value) ->
     @state = "unfulfilled"
+    @id = "#{@constructor?.name}#{Math.random()}"
     @fulfillHandlers = []
     @failHandlers = []
     @handlers = { fulfill: [], fail: [], progress: [] }
