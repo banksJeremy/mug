@@ -18,7 +18,7 @@ snapInt = (f) ->
   else
     f
 
-class Ref extends Promise
+relationships.Ref = class Ref extends Promise
   is: (value) ->
     if value? and @state is "unfulfilled"
       if value instanceof Function
@@ -86,10 +86,10 @@ commutitiveOperation = (operation) ->
     
     result
 
-sum = commutitiveOperation addition
-product = commutitiveOperation multiplication
+relationships.sum = sum = commutitiveOperation addition
+relationships.product = product = commutitiveOperation multiplication
 
-pow = (base, power) ->
+relationships.pow = pow = (base, power) ->
   base = Ref.of base
   power = Ref.of power
   
@@ -106,7 +106,7 @@ pow = (base, power) ->
   
   result
 
-equality = (refs...) ->
+relationships.equality = equality = (refs...) ->
   # Establishes equality between Refs.
   refs = refs.map(Ref.of)
   
@@ -117,7 +117,7 @@ equality = (refs...) ->
   
   refs[0]
 
-complement = (ref) ->
+relationships.complement = complement = (ref) ->
   # Refers to the 1-complement of a Ref object (cached)
   ref = Ref.of ref
   
@@ -129,7 +129,7 @@ complement = (ref) ->
     
   ref._complement
 
-reciprocal = (ref) ->
+relationships.reciprocal = reciprocal = (ref) ->
   # Returns the reciprocal of a Ref object (cached)
   ref = Ref.of ref
   
@@ -141,7 +141,7 @@ reciprocal = (ref) ->
   
   ref._reciprocal
 
-neg = -> (ref) ->
+relationships.neg = neg = -> (ref) ->
   ref = Ref.of ref
   
   if not ref._neg?
@@ -156,7 +156,7 @@ neg = -> (ref) ->
 I haven't put a ton of thought into how I'm going to organize this module yet.
 ===========================================================================###
 
-class PhysicalObject
+relationships.PhysicalObject = class PhysicalObject
   # A collection of Refs with simple physical relationships established.
   
   constructor: (knowns) ->
@@ -182,7 +182,7 @@ class PhysicalObject
     (equality @density,
               product @mass, reciprocal(@volume))
 
-class BayesianEvent extends Ref
+relationships.BayesianEvent = class BayesianEvent extends Ref
   # A Ref that allows you to reference its conditional probability with
   # respect to another BayesianEvent.
   
