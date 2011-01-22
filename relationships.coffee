@@ -161,12 +161,15 @@ relationships.PhysicalObject = class PhysicalObject
   
   constructor: (knowns) ->
     [@force, @mass, @acceleration, @kineticEnergy,
-     @speed, @density, @volume] =
+     @speed, @density, @volume, @displacement] =
     Ref.many()
     
     # set initially known values
     if knowns? then for name, value of knowns
-      this[name].is value
+      if name not of this
+        this[name] = new Ref value
+      else
+        this[name].is value
     
     # force = mass * accelertion
     (equality @force,

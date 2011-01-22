@@ -68,10 +68,8 @@ mug.Promise = class Promise
   
   constructor: (value) ->
     @state = "unfulfilled"
-    @id = "#{@constructor?.name}#{Math.random()}"
-    @fulfillHandlers = []
-    @failureHandlers = []
-    @handlers = { fulfilmentHandler: [], failure: [], progress: [] }
+    @id = "#{Math.random()}".replace "0.", "#{@constructor?.name}#"
+    @handlers = { fulfilment: [], failure: [], progress: [] }
     
     if value?
       @fulfill value
@@ -84,7 +82,7 @@ mug.Promise = class Promise
     
     @state = "fulfilled"
     
-    for f in @handlers.fulfill
+    for f in @handlers.fulfilment
       f.call this, @value
     
     delete @handlers
@@ -579,7 +577,7 @@ mug.BufferedIterator = class BufferedIterator extends Iterator
     push: (value) ->
         @buffer.unshift value
 
-mug.any = ref = (iterable) ->
+mug.any = any = (iterable) ->
   i = iter(iterable)
   
   if i.next()
