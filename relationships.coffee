@@ -182,20 +182,6 @@ class PhysicalObject
     (equality @density,
               product @mass, reciprocal(@volume))
 
-o = new PhysicalObject
-  density: 0.1
-  volume: 0.5
-  force: 2
-
-p = new PhysicalObject
-  speed: 10
-
-(equality o.mass, p.mass)
-
-console.log "m_o =", o.mass.value
-console.log "A_o =", o.acceleration.value
-console.log "e_kp =", p.kineticEnergy.value
-
 class BayesianEvent extends Ref
   # A Ref that allows you to reference its conditional probability with
   # respect to another BayesianEvent.
@@ -228,15 +214,3 @@ class BayesianEvent extends Ref
                      (product thatGivenNotThis, complement(this))))
     
     @_given[that.id]
-
-gotADog = new BayesianEvent
-areHappy = new BayesianEvent
-
-areHappy.given(gotADog).is 0.8
-areHappy.given(complement gotADog).is 0.5
-areHappy.is 0.7
-gotADog.given(areHappy).is 0.6
-
-console.log "P(got a dog) = #{gotADog.value}"
-console.log "P(have a dog | unhappy) = #{(gotADog.given(complement areHappy)).value}"
-console.log "P(have a dog | happy) = #{(gotADog.given(areHappy)).value}"

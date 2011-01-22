@@ -70,8 +70,8 @@ mug.Promise = class Promise
     @state = "unfulfilled"
     @id = "#{@constructor?.name}#{Math.random()}"
     @fulfillHandlers = []
-    @failHandlers = []
-    @handlers = { fulfill: [], fail: [], progress: [] }
+    @failureHandlers = []
+    @handlers = { fulfilmentHandler: [], failure: [], progress: [] }
     
     if value?
       @fulfill value
@@ -114,31 +114,42 @@ mug.Promise = class Promise
     p = new Promise
     @then (other.then (-> p.fulfill()), (-> p.fail())), (-> p.fail())
   
-  then: (fulfilledHander, failHandler, progressHandler) ->
-    if fulfilledHander?
-      if @state is "fulfilled"
-        fulfilledHander.call this, @value
-      else if @state is "unfulfilled"
-        @handlers.fulfill.push fulfilledHander
+  then: (fulfilmentHandler, failureHandler, progressHandler) ->
+    if @state is "unfulfilled"
+      @on fulfilmentHandler, failureHandler, progressHandler
+    else
+      if fulfilmentHandler? and @state is "fulfilled"
+          fulfilmentHandler.call this, @value
+      
+      if failureHandler? and @state is "failed"
+        failureHandler.call this, @value      
+      
+      null
+  
+  on: (fulfilmentHandler, failureHandler, progressHandler) ->
+    return if @state isnt "unfulfilled"
     
-    if failHandler?
-      if @state is "failed"
-        failHandler.call this, @value
-      else if @state is "unfulfilled"
-        @handlers.fail.push failHandler
+    if fulfilmentHandler?
+      @handlers.fulfilment.push fulfilmentHandler
+    
+    if failureHandler?
+      @handlers.failure.push failureHandler
     
     if progressHandler?
-      if @state is "unfulfilled"
-        @handlers.progress.push progressHandler
-    
-    null
+      @handlers.progress.push progressHandler
   
   get: (propertyName) ->
-    "a promise on a property of the promised value"
+    # a promise on a property of the promised object
+    
+    p = new Promise
+    @then ((value) -> p.fulfill value[propertyName]),
+          (-> p.fail()), ((event) -> p.progress event)
   
-  call: (method, args...) ->
-    "a promise on a method call on the pormised value"
-
+  call: (methodName, args...) ->
+    # a promise on a method call on the promised value
+    
+    @then ((value) -> p.fulfill value[propertyName] args...),
+          (-> p.fail()), ((event) -> p.progress event)
 
 # This module provides sequential data structures and iteration constructs
 # based on bits from Python, Clojure and conventional JavaScript. This is
